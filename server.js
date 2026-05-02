@@ -73,21 +73,25 @@ const server = http.createServer((req, res) => {
     }
 
     let body = '';
-    req.on('data', chunk => { body += chunk; if (body.length > 50000) req.destroy(); });
+    req.on('data', chunk => { body += chunk; if (body.length > 100000) req.destroy(); });
     req.on('end', () => {
       let parsed;
       try { parsed = JSON.parse(body); } catch(e) {
+        console.error('JSON parse error:', e.message, 'Body length:', body.length);
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid JSON' }));
         return;
       }
 
-      // Only allow the fields we need — strip anything else
+      // Build payload — model set server-side only
       const payload = JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: parsed.system || '',
-        messages: parsed.messages || []
+        messages: (parsed.messages || []).map(m => ({
+          role: m.role,
+          content: String(m.content)
+        }))
       });
 
       const options = {
@@ -106,6 +110,9 @@ const server = http.createServer((req, res) => {
         let data = '';
         proxyRes.on('data', chunk => data += chunk);
         proxyRes.on('end', () => {
+          if (proxyRes.statusCode !== 200) {
+            console.error('Anthropic error:', proxyRes.statusCode, data.substring(0, 300));
+          }
           res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
           res.end(data);
         });
