@@ -533,21 +533,30 @@ html, body { height: 100%; background: var(--surface); font-family: 'Barlow', sa
 <script>
 // ─── NAVIGATION STACK ────────────────────────────────
 let navStack = ['home'];
+let navLocked = false;
+
 function goTo(s) {
+  if (navLocked) return;
   const cur = navStack[navStack.length - 1];
+  if (cur === s) return; // already here
+  navLocked = true;
   document.getElementById('screen-' + cur).classList.add('exit-left');
   document.getElementById('screen-' + s).classList.add('active');
   navStack.push(s);
   if (s === 'journey') renderJourney();
   if (s === 'recipes') renderRecipes('all');
   if (s === 'modes')   renderModes();
+  setTimeout(() => { navLocked = false; }, 400); // match transition duration
 }
+
 function goBack() {
-  if (navStack.length <= 1) return;
+  if (navLocked || navStack.length <= 1) return;
+  navLocked = true;
   const cur = navStack.pop();
   const prev = navStack[navStack.length - 1];
   document.getElementById('screen-' + cur).classList.remove('active');
   document.getElementById('screen-' + prev).classList.remove('exit-left');
+  setTimeout(() => { navLocked = false; }, 400);
 }
 
 // ─── DATA ────────────────────────────────────────────
