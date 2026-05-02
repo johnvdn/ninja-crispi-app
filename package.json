@@ -1,0 +1,12 @@
+{
+  "name": "ninja-crispi-pro-companion",
+  "version": "1.0.0",
+  "description": "Ninja CRISPi PRO AI Companion — proxy server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

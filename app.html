@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ninja CRISPi PRO — AI Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red: #E8001D; --red-dk: #B8001A; --red-lt: #FFF0F1;
+  --ink: #1A1A1A; --ink2: #3A3A3A; --mid: #6A6A6A;
+  --border: #E2E2E0; --surface: #F5F4F0; --white: #FFFFFF;
+  --radius: 14px; --rsm: 8px;
+}
+html, body { height: 100%; background: var(--surface); font-family: 'Barlow', sans-serif; color: var(--ink); overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+
+/* ── APP SHELL ── */
+.app { max-width: 430px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: var(--white); position: relative; overflow: hidden; box-shadow: 0 0 0 0.5px var(--border); }
+
+/* ── SCREENS ── */
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.36s cubic-bezier(0.4,0,0.2,1); background: var(--white); overflow: hidden; }
+.screen.active    { transform: translateX(0); }
+.screen.exit-left { transform: translateX(-28%); }
+#screen-home      { transform: translateX(0); }
+
+/* ── TOP NAV ── */
+.top-nav { height: 52px; display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--white); z-index: 5; position: relative; }
+.back-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.14s; }
+.back-btn:hover { background: var(--border); }
+.nav-title { font-size: 15px; font-weight: 600; color: var(--ink); flex: 1; }
+.nav-sub   { font-size: 11px; color: var(--mid); margin-top: 1px; }
+.nav-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: var(--red); color: white; letter-spacing: 0.5px; }
+
+/* ── HOME SCREEN ── */
+#screen-home { overflow-y: auto; overflow-x: hidden; }
+#screen-home::-webkit-scrollbar { display: none; }
+
+.home-hero { position: relative; height: 300px; overflow: hidden; flex-shrink: 0; background: #0F0F0F; }
+.home-hero-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.78; display: block; }
+.home-hero-overlay { position: absolute; inset: 0; background: linear-gradient(170deg, rgba(15,15,15,0.05) 0%, rgba(15,15,15,0.82) 100%); }
+.hero-status { position: absolute; top: 0; left: 0; right: 0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+.hero-status-time { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.92); }
+.hero-status-icons { font-size: 12px; color: rgba(255,255,255,0.7); }
+.ninja-mark { position: absolute; top: 48px; left: 20px; display: flex; align-items: center; gap: 8px; }
+.ninja-n { width: 26px; height: 26px; background: var(--red); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.ninja-n svg { width: 16px; height: 16px; fill: white; }
+.ninja-text { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: white; }
+.hero-content { position: absolute; bottom: 22px; left: 20px; right: 20px; }
+.hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--red); margin-bottom: 4px; }
+.hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: 56px; font-weight: 800; line-height: 0.9; letter-spacing: -1px; color: white; text-transform: uppercase; margin-bottom: 10px; }
+.hero-sub { font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.62); margin-bottom: 12px; }
+.hero-badges { display: flex; gap: 7px; flex-wrap: wrap; }
+.hero-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.18); color: white; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; }
+.hero-badge.red { background: var(--red); border-color: var(--red); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: lp 2s infinite; }
+@keyframes lp { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+/* progress */
+.home-progress { padding: 14px 20px 10px; border-bottom: 1px solid var(--border); }
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.progress-header-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.progress-header-pct { font-size: 12px; color: var(--red); font-weight: 600; }
+.progress-track { height: 4px; background: var(--surface); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; width: 20%; background: var(--red); border-radius: 2px; transition: width 0.6s ease; }
+.progress-steps { display: flex; gap: 6px; flex-wrap: wrap; }
+.prog-step { font-size: 11px; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-family: inherit; font-weight: 500; border: none; }
+.prog-step.done   { background: var(--red); color: white; }
+.prog-step.active { background: var(--surface); color: var(--red); border: 1px solid var(--red); }
+.prog-step.todo   { background: var(--surface); color: var(--mid); border: 1px solid var(--border); }
+
+/* tiles */
+.tiles-section { padding: 18px; }
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+.tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.tile { border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.08); -webkit-tap-highlight-color: transparent; }
+.tile:hover  { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.tile:active { transform: scale(0.97); }
+.tile.wide   { grid-column: 1 / -1; }
+.tile-img { width: 100%; object-fit: cover; display: block; }
+.tile.tall .tile-img  { height: 200px; }
+.tile.short .tile-img { height: 145px; }
+.tile.wide .tile-img  { height: 155px; }
+.tile-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,15,15,0.0) 20%, rgba(15,15,15,0.8) 100%); padding: 12px; display: flex; flex-direction: column; justify-content: flex-end; }
+.tile-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--red); color: white; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; align-self: flex-start; }
+.tile-title { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; color: white; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+.tile.wide .tile-title { font-size: 30px; }
+.tile-desc { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.65); line-height: 1.3; }
+.tile-arrow { position: absolute; top: 11px; right: 11px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; }
+
+.home-alert { margin: 0 18px 20px; background: #FFF8F0; border: 1px solid #FFD4A0; border-left: 3px solid #FF8C00; border-radius: var(--rsm); padding: 12px 13px; display: flex; gap: 10px; align-items: flex-start; }
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #B05A00; margin-bottom: 2px; }
+.alert-text { font-size: 13px; color: var(--ink2); line-height: 1.4; }
+
+/* ── CHAT ── */
+#screen-chat { background: var(--surface); }
+.chat-messages-wrap { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 14px 13px 8px; display: flex; flex-direction: column; gap: 11px; }
+.chat-messages-wrap::-webkit-scrollbar { width: 3px; }
+.chat-messages-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.msg { display: flex; gap: 8px; align-items: flex-end; }
+.msg.user { flex-direction: row-reverse; }
+.msg-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.msg-avatar.ai   { background: var(--red); color: white; font-size: 13px; }
+.msg-avatar.user { background: var(--surface); border: 1px solid var(--border); color: var(--mid); }
+.msg-bubble { max-width: 80%; padding: 10px 13px; font-size: 14px; line-height: 1.55; }
+.msg.ai .msg-bubble   { background: white; color: var(--ink); border-radius: 16px 16px 16px 3px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.msg.user .msg-bubble { background: var(--red); color: white; border-radius: 16px 16px 3px 16px; }
+.typing-bubble { display: flex; gap: 5px; align-items: center; padding: 3px 1px; }
+.tdot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); animation: tb 1.3s infinite ease-in-out; }
+.tdot:nth-child(2){animation-delay:.16s;} .tdot:nth-child(3){animation-delay:.32s;}
+@keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:0.4;} 30%{transform:translateY(-4px);opacity:1;} }
+.chip-row { padding: 8px 13px; display: flex; gap: 6px; flex-wrap: wrap; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
+.chip { font-size: 12px; padding: 6px 11px; border-radius: 20px; border: 1px solid var(--border); color: var(--ink2); cursor: pointer; background: white; transition: all 0.13s; font-family: inherit; white-space: nowrap; }
+.chip:hover { border-color: var(--red); color: var(--red); }
+.chat-input-bar { padding: 9px 13px 16px; display: flex; gap: 9px; align-items: center; background: white; border-top: 1px solid var(--border); flex-shrink: 0; }
+.chat-input-bar input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--ink); font-family: inherit; font-size: 14px; padding: 10px 14px; border-radius: 24px; outline: none; transition: border-color 0.14s; }
+.chat-input-bar input::placeholder { color: #ABABAB; }
+.chat-input-bar input:focus { border-color: var(--red); background: white; }
+.send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--red); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; color: white; flex-shrink: 0; transition: transform 0.14s, background 0.14s; }
+.send-btn:hover  { background: var(--red-dk); }
+.send-btn:active { transform: scale(0.92); }
+
+/* ── SETUP JOURNEY ── */
+#screen-journey { background: var(--surface); }
+.scroll-content { flex: 1; overflow-y: auto; padding: 16px; }
+.scroll-content::-webkit-scrollbar { display: none; }
+.journey-banner { background: var(--ink); border-radius: var(--radius); padding: 16px; margin-bottom: 18px; display: flex; gap: 12px; align-items: center; }
+.journey-banner-icon { font-size: 30px; flex-shrink: 0; }
+.journey-banner-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; text-transform: uppercase; color: white; letter-spacing: 0.3px; margin-bottom: 1px; }
+.journey-banner-sub { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 300; }
+.step-item { display: flex; gap: 12px; margin-bottom: 2px; }
+.step-icon-col { display: flex; flex-direction: column; align-items: center; }
+.step-node { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s; }
+.step-node.done   { background: var(--red); color: white; font-size: 15px; }
+.step-node.active { background: white; border: 2px solid var(--red); color: var(--red); box-shadow: 0 0 0 4px rgba(232,0,29,0.08); }
+.step-node.todo   { background: white; border: 1px solid var(--border); color: var(--mid); }
+.step-connector { width: 1px; flex: 1; min-height: 12px; margin: 3px 0; }
+.step-connector.done { background: rgba(232,0,29,0.3); }
+.step-connector.todo { background: var(--border); }
+.step-right { flex: 1; padding-bottom: 16px; padding-top: 4px; }
+.step-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.step-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.step-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.4px; }
+.step-pill.done   { background: var(--red-lt); color: var(--red); }
+.step-pill.active { background: var(--red); color: white; }
+.step-pill.todo   { background: var(--surface); color: var(--mid); border: 1px solid var(--border); }
+.step-desc { font-size: 13px; color: var(--mid); font-weight: 300; line-height: 1.45; margin-bottom: 8px; }
+.step-cta-btn { font-size: 13px; padding: 7px 14px; border-radius: var(--rsm); background: var(--red); color: white; border: none; cursor: pointer; font-family: inherit; font-weight: 600; transition: background 0.14s; }
+.step-cta-btn:hover { background: var(--red-dk); }
+
+/* ── RECIPES ── */
+#screen-recipes { background: var(--white); }
+.recipes-hero { position: relative; height: 175px; overflow: hidden; flex-shrink: 0; }
+.recipes-hero img { width: 100%; height: 100%; object-fit: cover; }
+.recipes-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,15,15,0.3) 0%, rgba(15,15,15,0.88) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 18px; }
+.recipes-hero-overlay .back-float { position: absolute; top: 52px; left: 16px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); }
+.screen-hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: 38px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.3px; color: white; line-height: 1; }
+.screen-hero-sub { font-size: 13px; color: rgba(255,255,255,0.58); font-weight: 300; }
+.filter-bar { padding: 10px 13px; display: flex; gap: 7px; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.fpill { font-size: 12px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border); color: var(--mid); cursor: pointer; background: white; white-space: nowrap; transition: all 0.13s; font-family: inherit; font-weight: 500; }
+.fpill.active { background: var(--red); color: white; border-color: var(--red); }
+.recipes-scroll { flex: 1; overflow-y: auto; }
+.recipes-scroll::-webkit-scrollbar { display: none; }
+.recipe-list { padding: 13px; display: flex; flex-direction: column; gap: 11px; }
+.rcard { border-radius: var(--radius); overflow: hidden; background: white; border: 1px solid var(--border); cursor: pointer; transition: box-shadow 0.2s, transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.rcard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+.rcard-img { position: relative; height: 140px; overflow: hidden; }
+.rcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s; }
+.rcard:hover .rcard-img img { transform: scale(1.04); }
+.rcard-img-bar { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(15,15,15,0.55) 100%); display: flex; align-items: flex-end; padding: 9px; }
+.mode-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: var(--red); color: white; }
+.rcard-body { padding: 13px; }
+.rcard-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.rcard-meta { display: flex; gap: 12px; font-size: 12px; color: var(--mid); }
+.rcard-steps { display: none; font-size: 13px; color: var(--ink2); line-height: 1.65; border-top: 1px solid var(--border); padding-top: 11px; margin-top: 11px; }
+.rcard.open .rcard-steps { display: block; }
+.rcard-actions { margin-top: 11px; display: flex; gap: 7px; }
+.rcard-btn { font-size: 13px; padding: 7px 13px; border-radius: var(--rsm); cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.13s; }
+.rcard-btn.primary { background: var(--red); color: white; border: none; }
+.rcard-btn.primary:hover { background: var(--red-dk); }
+.rcard-btn.ghost { background: transparent; color: var(--mid); border: 1px solid var(--border); }
+
+/* ── CARE ── */
+#screen-care { background: var(--surface); }
+.care-hero { position: relative; height: 165px; overflow: hidden; flex-shrink: 0; }
+.care-hero img { width: 100%; height: 100%; object-fit: cover; }
+.care-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,15,15,0.15) 0%, rgba(15,15,15,0.88) 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 18px; }
+.care-scroll { flex: 1; overflow-y: auto; }
+.care-scroll::-webkit-scrollbar { display: none; }
+.care-section { padding: 14px 13px 0; }
+.care-section-title { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); margin-bottom: 10px; }
+.care-card { background: white; border-radius: var(--radius); padding: 13px; margin-bottom: 9px; border: 1px solid var(--border); display: flex; gap: 11px; align-items: flex-start; }
+.care-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--red-lt); border: 1px solid #FFD4D8; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.care-card-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.care-card-text { font-size: 13px; color: var(--mid); line-height: 1.5; font-weight: 300; }
+.tcard { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 9px; overflow: hidden; cursor: pointer; transition: border-color 0.14s; }
+.tcard:hover { border-color: #FFAAB0; }
+.tcard-header { padding: 13px; display: flex; align-items: center; gap: 11px; }
+.tcard-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.tcard-icon.warn { background: #FFF5E6; } .tcard-icon.info { background: #EBF5FF; } .tcard-icon.ok { background: #F0FFF4; }
+.tcard-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.tcard-sub   { font-size: 12px; color: var(--mid); }
+.tcard-chevron { margin-left: auto; color: var(--mid); font-size: 15px; transition: transform 0.2s; }
+.tcard.open .tcard-chevron { transform: rotate(90deg); }
+.tcard-body { display: none; font-size: 13px; color: var(--ink2); line-height: 1.65; font-weight: 300; border-top: 1px solid var(--border); padding: 11px 13px 13px; }
+.tcard.open .tcard-body { display: block; }
+.tcard-ask { margin-top: 10px; font-size: 13px; padding: 7px 14px; border-radius: var(--rsm); background: var(--red); color: white; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+/* ── MODES SCREEN ── */
+#screen-modes { background: var(--white); }
+.modes-scroll { flex: 1; overflow-y: auto; }
+.modes-scroll::-webkit-scrollbar { display: none; }
+.mode-card { margin: 0 13px 10px; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; background: white; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.mode-card:hover { border-color: #FFAAB0; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.mode-card-header { padding: 14px; display: flex; align-items: center; gap: 13px; }
+.mode-card-icon { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; background: var(--red-lt); }
+.mode-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; color: var(--ink); }
+.mode-card-desc { font-size: 12px; color: var(--mid); font-weight: 300; }
+.mode-card-range { margin-left: auto; text-align: right; }
+.mode-card-temp { font-size: 13px; font-weight: 600; color: var(--red); }
+.mode-card-label { font-size: 11px; color: var(--mid); }
+.mode-card-body { display: none; border-top: 1px solid var(--border); padding: 13px; font-size: 13px; color: var(--ink2); line-height: 1.6; font-weight: 300; }
+.mode-card.open .mode-card-body { display: block; }
+.mode-ask-btn { margin-top: 10px; font-size: 13px; padding: 7px 14px; border-radius: var(--rsm); background: var(--red); color: white; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+.modes-intro { margin: 13px 13px 10px; background: var(--ink); border-radius: var(--radius); padding: 14px 16px; }
+.modes-intro-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; text-transform: uppercase; color: white; margin-bottom: 3px; }
+.modes-intro-sub { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 300; line-height: 1.4; }
+
+/* ── CLEANING TABLE ── */
+.clean-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+.clean-table th { background: var(--surface); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--mid); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.clean-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--ink2); line-height: 1.4; }
+.clean-table tr:last-child td { border-bottom: none; }
+.clean-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.clean-tag.yes { background: #E6F9EE; color: #1A7A3E; }
+.clean-tag.no  { background: #FFE9EC; color: var(--red); }
+
+/* ── UTILITY ── */
+.fade-in { animation: fadeUp 0.32s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(7px);} to{opacity:1;transform:translateY(0);} }
+.floating-back { position: absolute; top: 56px; left: 16px; z-index: 20; }
+
+/* api gate removed */ }
+.gate-btn.loading .gate-btn-text { display: none; }
+.gate-btn.loading .gate-spinner { display: block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ═══════ HOME ═══════ -->
+<div class="screen active" id="screen-home">
+  <div class="home-hero">
+    <img class="home-hero-img" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80" alt="CRISPi PRO" />
+    <div class="home-hero-overlay"></div>
+    <div class="hero-status">
+      <span class="hero-status-time" id="hero-time">9:41</span>
+      <span class="hero-status-icons">▲▲▲ ◼</span>
+    </div>
+    <div class="ninja-mark">
+      <div class="ninja-n"><svg viewBox="0 0 18 18"><path d="M3 2h3.5l5 9V2H15v14h-3.5l-5-9v9H3z"/></svg></div>
+      <span class="ninja-text">Ninja</span>
+    </div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Indoor · AS100</div>
+      <div class="hero-title">CRISPi<br>PRO</div>
+      <div class="hero-sub">6 cooking modes · 1800W · CleanCrisp™ Glass</div>
+      <div class="hero-badges">
+        <span class="hero-badge red"><span class="live-dot"></span> AI companion active</span>
+        <span class="hero-badge">6 modes</span>
+        <span class="hero-badge">1800W</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-progress">
+    <div class="progress-header">
+      <span class="progress-header-label">Your setup journey</span>
+      <span class="progress-header-pct">1 of 5 complete</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <div class="progress-steps">
+      <button class="prog-step done"   onclick="goTo('journey')">Unboxed ✓</button>
+      <button class="prog-step active" onclick="goTo('journey')">First wash</button>
+      <button class="prog-step todo"   onclick="goTo('journey')">First cook</button>
+      <button class="prog-step todo"   onclick="goTo('journey')">Explore modes</button>
+    </div>
+  </div>
+
+  <div class="tiles-section">
+    <div class="section-label">Your CRISPi PRO</div>
+    <div class="tiles-grid">
+      <div class="tile wide" onclick="goTo('chat')">
+        <img class="tile-img" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80" alt="Food" />
+        <div class="tile-overlay">
+          <span class="tile-tag">✦ AI-powered</span>
+          <div class="tile-title">Ask anything</div>
+          <div class="tile-desc">Recipes, settings, troubleshooting — your personal air fry expert</div>
+        </div>
+        <div class="tile-arrow">↗</div>
+      </div>
+      <div class="tile tall" onclick="goTo('journey')">
+        <img class="tile-img" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80" alt="Setup" />
+        <div class="tile-overlay">
+          <span class="tile-tag">◎ Setup</span>
+          <div class="tile-title">Setup guide</div>
+          <div class="tile-desc">Box to first cook</div>
+        </div>
+        <div class="tile-arrow">↗</div>
+      </div>
+      <div class="tile tall" onclick="goTo('recipes')">
+        <img class="tile-img" src="https://images.unsplash.com/photo-1585325701956-60dd9c8553bc?w=600&q=80" alt="Recipes" />
+        <div class="tile-overlay">
+          <span class="tile-tag">⊕ Recipes</span>
+          <div class="tile-title">Recipes</div>
+          <div class="tile-desc">Air fry, roast & bake</div>
+        </div>
+        <div class="tile-arrow">↗</div>
+      </div>
+      <div class="tile wide short" onclick="goTo('modes')">
+        <img class="tile-img" src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=900&q=80" alt="Modes" />
+        <div class="tile-overlay">
+          <span class="tile-tag">⚡ 6 modes</span>
+          <div class="tile-title">Cooking modes</div>
+          <div class="tile-desc">Air Fry · Max Crisp · Recrisp · Roast · Bake · Dehydrate</div>
+        </div>
+        <div class="tile-arrow">↗</div>
+      </div>
+      <div class="tile wide short" onclick="goTo('care')">
+        <img class="tile-img" src="https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=900&q=80" alt="Care" />
+        <div class="tile-overlay">
+          <span class="tile-tag">⟳ Care</span>
+          <div class="tile-title">Care & troubleshoot</div>
+          <div class="tile-desc">Glass container care, cleaning & fixes</div>
+        </div>
+        <div class="tile-arrow">↗</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-alert">
+    <div class="alert-icon">💧</div>
+    <div>
+      <div class="alert-label">Next step</div>
+      <div class="alert-text"><strong>Wash the containers, crisper plates, and lids</strong> in hot soapy water before your first cook. Never put the main unit in a dishwasher.</div>
+    </div>
+  </div>
+</div><!-- /home -->
+
+
+<!-- ═══════ CHAT ═══════ -->
+<div class="screen" id="screen-chat">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div style="display:flex;align-items:center;gap:9px;flex:1;">
+      <div style="width:30px;height:30px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="white"><path d="M3 2h3.5l5 9V2H15v14h-3.5l-5-9v9H3z"/></svg>
+      </div>
+      <div>
+        <div class="nav-title" style="line-height:1.1;">CRISPi PRO AI</div>
+        <div class="nav-sub" style="color:var(--red);">● Online now</div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-messages-wrap" id="chat-messages">
+    <div class="msg ai fade-in">
+      <div class="msg-avatar ai">N</div>
+      <div class="msg-bubble">
+        Hey! I'm your CRISPi PRO AI 👋<br><br>
+        I know your appliance inside out — ask me anything about cooking modes, times, temperatures, glass container care, or what to make tonight.
+      </div>
+    </div>
+  </div>
+  <div class="chip-row" id="chip-row">
+    <button class="chip" onclick="sendQ('How do I use the CRISPi PRO for the first time?')">First use</button>
+    <button class="chip" onclick="sendQ('What cooking modes does it have and when do I use each one?')">Cooking modes</button>
+    <button class="chip" onclick="sendQ('What can I air fry tonight for dinner?')">Dinner ideas</button>
+    <button class="chip" onclick="sendQ('Why does ADD POT appear on the screen?')">ADD POT error</button>
+  </div>
+  <div class="chat-input-bar">
+    <input type="text" id="chat-input" placeholder="Ask anything about your CRISPi PRO…" autocomplete="off" />
+    <button class="send-btn" onclick="sendChat()">↑</button>
+  </div>
+</div><!-- /chat -->
+
+
+<!-- ═══════ JOURNEY ═══════ -->
+<div class="screen" id="screen-journey">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div>
+      <div class="nav-title">Setup journey</div>
+      <div class="nav-sub">CRISPi PRO AS100</div>
+    </div>
+  </div>
+  <div class="scroll-content">
+    <div class="journey-banner">
+      <div class="journey-banner-icon">🎉</div>
+      <div>
+        <div class="journey-banner-title">1 of 5 steps done</div>
+        <div class="journey-banner-sub">About 20 minutes to complete setup</div>
+      </div>
+    </div>
+    <div id="journey-container"></div>
+  </div>
+</div><!-- /journey -->
+
+
+<!-- ═══════ RECIPES ═══════ -->
+<div class="screen" id="screen-recipes">
+  <div class="top-nav" style="position:absolute;top:0;left:0;right:0;z-index:10;background:transparent;border:none;">
+    <button class="back-btn" onclick="goBack()" style="background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);">←</button>
+  </div>
+  <div class="recipes-hero" style="flex-shrink:0;">
+    <img src="https://images.unsplash.com/photo-1585325701956-60dd9c8553bc?w=900&q=80" alt="Recipes" />
+    <div class="recipes-hero-overlay">
+      <div class="screen-hero-title">Recipes</div>
+      <div class="screen-hero-sub">Air fry · Roast · Bake · Dehydrate</div>
+    </div>
+  </div>
+  <div class="filter-bar" style="flex-shrink:0;">
+    <button class="fpill active" onclick="filterR('all',this)">All</button>
+    <button class="fpill" onclick="filterR('air fry',this)">🌬 Air Fry</button>
+    <button class="fpill" onclick="filterR('max crisp',this)">🔥 Max Crisp</button>
+    <button class="fpill" onclick="filterR('roast',this)">🥩 Roast</button>
+    <button class="fpill" onclick="filterR('bake',this)">🧁 Bake</button>
+    <button class="fpill" onclick="filterR('easy',this)">⭐ Easy</button>
+  </div>
+  <div class="recipes-scroll">
+    <div class="recipe-list" id="recipe-list"></div>
+  </div>
+</div><!-- /recipes -->
+
+
+<!-- ═══════ MODES ═══════ -->
+<div class="screen" id="screen-modes">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div>
+      <div class="nav-title">Cooking modes</div>
+      <div class="nav-sub">6 modes · AS100</div>
+    </div>
+    <span class="nav-badge">6</span>
+  </div>
+  <div class="modes-scroll">
+    <div class="modes-intro">
+      <div class="modes-intro-title">Choose your mode</div>
+      <div class="modes-intro-sub">Press the Mode button on the unit, then turn the dial to select. Tap any mode below to learn when to use it.</div>
+    </div>
+    <div id="modes-container"></div>
+    <div style="height:16px;"></div>
+  </div>
+</div><!-- /modes -->
+
+
+<!-- ═══════ CARE ═══════ -->
+<div class="screen" id="screen-care">
+  <div class="top-nav" style="position:absolute;top:0;left:0;right:0;z-index:10;background:transparent;border:none;">
+    <button class="back-btn" onclick="goBack()" style="background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);">←</button>
+  </div>
+  <div class="care-hero" style="flex-shrink:0;">
+    <img src="https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=900&q=80" alt="Care" />
+    <div class="care-hero-overlay">
+      <div class="screen-hero-title">Care & Tips</div>
+      <div class="screen-hero-sub">Glass containers · Cleaning · Troubleshooting</div>
+    </div>
+  </div>
+  <div class="care-scroll">
+    <!-- Glass container care -->
+    <div class="care-section">
+      <div class="care-section-title">Glass container care</div>
+      <div class="care-card"><div class="care-icon">🧊</div><div><div class="care-card-title">Avoid sudden temperature changes</div><div class="care-card-text">Never add cold food to a hot container or vice versa. Let glass cool to room temp before placing in water, sink, or dishwasher.</div></div></div>
+      <div class="care-card"><div class="care-icon">🛡️</div><div><div class="care-card-title">Handles & base are permanent</div><div class="care-card-text">The heat-protectant base and easy-grip handles must never be removed. Stop using the container if they become damaged.</div></div></div>
+      <div class="care-card"><div class="care-icon">⚠️</div><div><div class="care-card-title">Inspect before every use</div><div class="care-card-text">If a container becomes chipped, cracked, or deeply scratched, discard it immediately — do not use. Dispose in standard waste, not recycling.</div></div></div>
+      <div class="care-card"><div class="care-icon">🍽️</div><div><div class="care-card-title">Safe to put on any surface</div><div class="care-card-text">The heat-protectant base means containers can go straight onto any countertop during or after cooking.</div></div></div>
+    </div>
+
+    <!-- Cleaning table -->
+    <div class="care-section">
+      <div class="care-section-title">Cleaning guide</div>
+      <div style="background:white;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;">
+        <table class="clean-table">
+          <thead><tr><th>Part</th><th>Method</th><th>Dishwasher?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Main Unit</strong></td><td>Wipe with damp cloth only. Never immerse in water.</td><td><span class="clean-tag no">No</span></td></tr>
+            <tr><td><strong>Glass Containers</strong></td><td>Dishwasher or hand wash with hot soapy water. Let glass cool first.</td><td><span class="clean-tag yes">Yes</span></td></tr>
+            <tr><td><strong>Crisper Plates</strong></td><td>Dishwasher or hand wash. Air dry or towel dry.</td><td><span class="clean-tag yes">Yes</span></td></tr>
+            <tr><td><strong>Lids</strong></td><td>Dishwasher (top rack only) or hand wash.</td><td><span class="clean-tag yes">Top rack</span></td></tr>
+            <tr><td><strong>Modular Base</strong></td><td>Hand wash or wipe with damp cloth only.</td><td><span class="clean-tag no">No</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="care-section">
+      <div class="care-section-title">Troubleshooting</div>
+      <div class="tcard" onclick="toggleT(this)">
+        <div class="tcard-header"><div class="tcard-icon warn">📺</div><div><div class="tcard-title">"ADD POT" on the screen</div><div class="tcard-sub">Container not installed correctly</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">The glass container isn't seated properly. Make sure the modular base is in the correct position for your container size (2.5QT = High, 4QT = Middle, 6QT = Low), then push the container all the way back until it <strong>clicks</strong> into place.<br><br><button class="tcard-ask" onclick="event.stopPropagation();askFromCare('My CRISPi PRO shows ADD POT — how do I fix it?')">Ask AI for help ↗</button></div>
+      </div>
+      <div class="tcard" onclick="toggleT(this)">
+        <div class="tcard-header"><div class="tcard-icon warn">🍳</div><div><div class="tcard-title">Food not cooking evenly</div><div class="tcard-sub">Browning or texture issues</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">Arrange ingredients in a single even layer with no overlapping. Use the crisper plate so air can circulate underneath. Shake or flip halfway through the cook time using the easy-grip handles or a silicone-tipped utensil.<br><br><button class="tcard-ask" onclick="event.stopPropagation();askFromCare('My food is not cooking evenly in the CRISPi PRO — what am I doing wrong?')">Ask AI for help ↗</button></div>
+      </div>
+      <div class="tcard" onclick="toggleT(this)">
+        <div class="tcard-header"><div class="tcard-icon warn">🔥</div><div><div class="tcard-title">Food is burning or overcooked</div><div class="tcard-sub">Check progress frequently</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">Check food frequently and remove when your desired level of brownness is achieved. You can adjust time and temperature at any time during cooking — press Temp or Time and use the dial. Remove food immediately when the timer ends.<br><br><button class="tcard-ask" onclick="event.stopPropagation();askFromCare('My food is burning in the CRISPi PRO — how do I stop it overcooking?')">Ask AI for help ↗</button></div>
+      </div>
+      <div class="tcard" onclick="toggleT(this)">
+        <div class="tcard-header"><div class="tcard-icon info">💨</div><div><div class="tcard-title">Food blowing around inside</div><div class="tcard-sub">Lightweight ingredients</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">Lightweight foods can blow around from the fan. Use toothpicks to secure loose items like sandwich tops. For breaded foods, ensure breadcrumbs are firmly pressed on — coat flour first, then egg, then breadcrumbs.<br><br><button class="tcard-ask" onclick="event.stopPropagation();askFromCare('Food keeps blowing around in my CRISPi PRO — how do I stop it?')">Ask AI for help ↗</button></div>
+      </div>
+      <div class="tcard" onclick="toggleT(this)">
+        <div class="tcard-header"><div class="tcard-icon info">📱</div><div><div class="tcard-title">Screen went black</div><div class="tcard-sub">Standby mode</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">The unit has gone into standby mode. Simply press the Power/Start button to wake it up. This is normal behaviour during idle periods.</div>
+      </div>
+      <div class="tcard" onclick="toggleT(this)" style="margin-bottom:20px;">
+        <div class="tcard-header"><div class="tcard-icon warn">❗</div><div><div class="tcard-title">"E" error on screen</div><div class="tcard-sub">Malfunction detected</div></div><div class="tcard-chevron">›</div></div>
+        <div class="tcard-body">The unit is not functioning properly. Stop use immediately and contact Ninja Customer Service at <strong>1-877-646-5288</strong> or visit <strong>ninjakitchen.com/support</strong>.<br><br><button class="tcard-ask" onclick="event.stopPropagation();askFromCare('My CRISPi PRO is showing an E error code — what should I do?')">Ask AI for help ↗</button></div>
+      </div>
+    </div>
+
+    <div style="height:16px;"></div>
+  </div>
+</div><!-- /care -->
+
+</div><!-- /app -->
+
+<script>
+// ─── NAVIGATION STACK ────────────────────────────────
+let navStack = ['home'];
+function goTo(s) {
+  const cur = navStack[navStack.length - 1];
+  document.getElementById('screen-' + cur).classList.add('exit-left');
+  document.getElementById('screen-' + s).classList.add('active');
+  navStack.push(s);
+  if (s === 'journey') renderJourney();
+  if (s === 'recipes') renderRecipes('all');
+  if (s === 'modes')   renderModes();
+}
+function goBack() {
+  if (navStack.length <= 1) return;
+  const cur = navStack.pop();
+  const prev = navStack[navStack.length - 1];
+  document.getElementById('screen-' + cur).classList.remove('active');
+  document.getElementById('screen-' + prev).classList.remove('exit-left');
+}
+
+// ─── DATA ────────────────────────────────────────────
+const STEPS = [
+  { id:1, emoji:'📦', title:'Unboxing complete', desc:'Packaging removed. Unit, adjustable platform, glass containers, crisper plates, lids, and modular base all confirmed.', status:'done' },
+  { id:2, emoji:'💧', title:'First wash', desc:'Wash glass containers, crisper plates, and lids in hot soapy water. Rinse and dry thoroughly. Never wash the main unit in a dishwasher.', status:'active', cta:'Get guided walkthrough' },
+  { id:3, emoji:'📐', title:'Set the modular base', desc:'Adjust the modular base to match your container: 2.5QT = High, 4QT = Middle, 6QT = Low position.', status:'todo', cta:'Learn how' },
+  { id:4, emoji:'🔌', title:'Your first cook', desc:'Choose Air Fry mode, set temperature and time, push the container until it clicks, and press the dial to start.', status:'todo', cta:'Start first cook' },
+  { id:5, emoji:'⚡', title:'Explore all 6 modes', desc:'From Max Crisp finishing to overnight Dehydrate — unlock everything your CRISPi PRO can do.', status:'todo', cta:'Explore modes' },
+];
+
+const RECIPES = [
+  { mode:'air fry',   diff:'Easy',   time:'18 min', temp:'390°F', title:'Crispy chicken wings',
+    img:'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=600&q=75',
+    steps:'1. Pat wings completely dry — moisture is the enemy of crispiness\n2. Toss with 1 tbsp oil, salt, pepper, garlic powder\n3. Arrange in a single layer on crisper plate, no overlapping\n4. Air Fry at 390°F for 18 min\n5. Shake halfway through at the 9-min mark\n6. Check internal temp reaches 165°F before serving' },
+  { mode:'air fry',   diff:'Easy',   time:'15 min', temp:'400°F', title:'Crispy french fries',
+    img:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=600&q=75',
+    steps:'1. Cut potatoes into even fries — uniform size = even cooking\n2. Soak in cold water 20 mins, pat thoroughly dry\n3. Toss with 1 tbsp oil and salt\n4. Air Fry at 400°F for 15 min\n5. Shake at 8 min mark for even browning\n6. Season immediately while hot' },
+  { mode:'roast',     diff:'Medium', time:'25 min', temp:'375°F', title:'Roasted vegetables',
+    img:'https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=600&q=75',
+    steps:'1. Cut veg into similar-sized pieces for even cooking\n2. Toss with 1½ tbsp olive oil, salt, herbs of choice\n3. Use crisper plate, arrange in single layer\n4. Roast at 375°F for 25 min\n5. Toss halfway through at 12 min\n6. They\'re ready when caramelised at edges' },
+  { mode:'max crisp', diff:'Easy',   time:'4 min',  temp:'450°F', title:'Cheese on toast / nachos',
+    img:'https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=600&q=75',
+    steps:'1. Arrange food in container with toppings on top\n2. Select Max Crisp mode (highest heat, top-down finish)\n3. Run for 3–5 mins — watch closely as it works fast\n4. Ideal for melting cheese, crisping crumbs, or browning gratins\n5. Use oven mitts — container will be very hot' },
+  { mode:'bake',      diff:'Medium', time:'20 min', temp:'325°F', title:'Chocolate lava cakes',
+    img:'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&q=75',
+    steps:'1. Mix 60g dark chocolate + 60g butter, melt together\n2. Whisk in 2 eggs, 2 yolks, 60g sugar, 30g flour\n3. Pour into lightly greased ramekins\n4. Bake at 325°F for 10–12 min — centre should wobble\n5. Rest 1 min, run knife around edge, invert onto plate\n6. Serve immediately with ice cream' },
+  { mode:'air fry',   diff:'Easy',   time:'12 min', temp:'380°F', title:'Salmon fillets',
+    img:'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=75',
+    steps:'1. Pat salmon dry, brush with oil, season with salt and lemon pepper\n2. Place skin-side down on crisper plate\n3. Air Fry at 380°F for 10–12 min depending on thickness\n4. No need to flip — the circulating air cooks all sides\n5. Check with thermometer: 145°F internal for done\n6. Rest 2 mins before serving' },
+];
+
+const MODES = [
+  { emoji:'🌬️', name:'Air Fry', range:'250–450°F', desc:'The everyday hero. Uses rapid hot-air circulation to give food a crispy, golden finish with little or no oil. Use for chips, wings, frozen foods, vegetables, fish.', tips:'For vegetables and potatoes, use at least 1 tablespoon of oil for best crispiness. Shake halfway through for even results.' },
+  { emoji:'🔥', name:'Max Crisp', range:'Up to 450°F', desc:'Adds the crispy finishing touch to meals or melts and browns toppings. Think of it as a high-intensity finish — great for gratins, nachos, cheese crusts, and reheated pizza.', tips:'Works fast — monitor closely. Ideal as a final 3–5 minute step after your main cook.' },
+  { emoji:'♻️', name:'Recrisp', range:'300–400°F', desc:'Revives leftover food gently, restoring crispiness without drying it out. Perfect for fries, pizza, fried chicken, and spring rolls from the fridge.', tips:'No need to add oil. Lower temperature than Air Fry — it warms through first, then crisps up. Usually 5–8 minutes.' },
+  { emoji:'🥩', name:'Roast', range:'250–450°F', desc:'Roasts meats to tenderise and develop flavour — similar to an oven but faster. Great for chicken thighs, pork tenderloin, and root vegetables.', tips:'Allow more time than Air Fry. Use a meat thermometer to check doneness — chicken 165°F, pork 145°F, beef to preference.' },
+  { emoji:'🧁', name:'Bake / Proof', range:'250–400°F', desc:'Creates baked treats and desserts, or proves bread dough. The gentle, consistent heat makes it great for muffins, brownies, cakes, and dough fermentation.', tips:'No preheating needed. For bread dough proving, set to lowest temperature for 30–60 mins.' },
+  { emoji:'🌿', name:'Dehydrate', range:'105–195°F', desc:'Removes moisture from meats, fruits, and vegetables to make healthy, shelf-stable snacks. Beef jerky, dried mango, kale chips, and herb drying.', tips:'Longer cook times — often 3–8 hours depending on food thickness. Slice ingredients evenly for consistent results.' },
+];
+
+const FOLLOW_UPS = {
+  'air fry':  ['How much oil should I use?','What temp for frozen food?','When should I shake the basket?'],
+  'mode':     ['Which mode for frozen chips?','When to use Max Crisp?','Can I bake a cake in it?'],
+  'glass':    ['Is it dishwasher safe?','Can I put it in the fridge?','What if it gets scratched?'],
+  'add pot':  ['Which base position is correct?','How do I know it\'s clicked in?','Why does it keep showing?'],
+  'clean':    ['How often should I clean it?','Can I use soap on the plate?','Is the modular base dishwasher safe?'],
+};
+
+// ─── JOURNEY RENDER ──────────────────────────────────
+function renderJourney() {
+  const c = document.getElementById('journey-container');
+  if (c.dataset.rendered) return;
+  c.dataset.rendered = '1';
+  const pills = { done:'Done', active:'Up next', todo:'Upcoming' };
+  c.innerHTML = STEPS.map((s, i) => {
+    const last = i === STEPS.length - 1;
+    const lc = s.status === 'done' ? 'done' : 'todo';
+    const node = s.status === 'done' ? '✓' : s.emoji;
+    const cta = s.cta ? `<button class="step-cta-btn" onclick="stepCTA(${s.id})">${s.cta} →</button>` : '';
+    return `<div class="step-item">
+      <div class="step-icon-col">
+        <div class="step-node ${s.status}">${node}</div>
+        ${!last ? `<div class="step-connector ${lc}"></div>` : ''}
+      </div>
+      <div class="step-right">
+        <div class="step-row"><div class="step-name">${s.title}</div><span class="step-pill ${s.status}">${pills[s.status]}</span></div>
+        <div class="step-desc">${s.desc}</div>
+        ${cta}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function stepCTA(id) {
+  const qs = {
+    2: 'Walk me through washing the CRISPi PRO glass containers for the first time.',
+    3: 'How do I set the modular base position for my CRISPi PRO container?',
+    4: 'Guide me through my first cook on the CRISPi PRO step by step.',
+    5: 'Tell me about all 6 cooking modes on the CRISPi PRO and when to use each one.',
+  };
+  if (qs[id]) { goTo('chat'); setTimeout(() => sendQ(qs[id]), 200); }
+}
+
+// ─── MODES RENDER ────────────────────────────────────
+function renderModes() {
+  const c = document.getElementById('modes-container');
+  if (c.dataset.rendered) return;
+  c.dataset.rendered = '1';
+  c.innerHTML = MODES.map(m => `
+    <div class="mode-card" onclick="toggleMode(this)">
+      <div class="mode-card-header">
+        <div class="mode-card-icon">${m.emoji}</div>
+        <div style="flex:1;">
+          <div class="mode-card-name">${m.name}</div>
+          <div class="mode-card-desc">${m.desc.substring(0,55)}…</div>
+        </div>
+        <div class="mode-card-range">
+          <div class="mode-card-temp">${m.range}</div>
+          <div class="mode-card-label">temp range</div>
+        </div>
+      </div>
+      <div class="mode-card-body">
+        <p style="margin-bottom:8px;">${m.desc}</p>
+        <p style="color:var(--mid);font-size:12px;"><strong style="color:var(--ink2);">Tip:</strong> ${m.tips}</p>
+        <button class="mode-ask-btn" onclick="event.stopPropagation();askFromMode('${m.name.replace(/'/g,'&#39;')}')">Ask AI about ${m.name} ↗</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleMode(el) {
+  const was = el.classList.contains('open');
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('open'));
+  if (!was) el.classList.add('open');
+}
+
+function askFromMode(name) { goTo('chat'); setTimeout(() => sendQ(`Give me tips and recipe ideas for ${name} mode on my CRISPi PRO.`), 200); }
+
+// ─── RECIPES RENDER ──────────────────────────────────
+function renderRecipes(filter) {
+  const list = document.getElementById('recipe-list');
+  const data = filter === 'all' ? RECIPES
+    : filter === 'easy' ? RECIPES.filter(r => r.diff === 'Easy')
+    : RECIPES.filter(r => r.mode === filter);
+  list.innerHTML = data.map(r => {
+    const st = r.title.replace(/&/g,'&amp;').replace(/'/g,'&#39;');
+    return `<div class="rcard" onclick="toggleR(this)">
+      <div class="rcard-img">
+        <img src="${r.img}" alt="${r.title}" loading="lazy"/>
+        <div class="rcard-img-bar"><span class="mode-tag">${r.mode}</span></div>
+      </div>
+      <div class="rcard-body">
+        <div class="rcard-title">${r.title}</div>
+        <div class="rcard-meta"><span>⏱ ${r.time}</span><span>🌡 ${r.temp}</span><span>${r.diff}</span></div>
+        <div class="rcard-steps">${r.steps.replace(/\n/g,'<br>')}
+          <div class="rcard-actions">
+            <button class="rcard-btn primary" onclick="event.stopPropagation();askR('${st}')">Cook with AI ↗</button>
+            <button class="rcard-btn ghost" onclick="event.stopPropagation();this.closest('.rcard').classList.remove('open')">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterR(mode, btn) {
+  document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecipes(mode);
+}
+function toggleR(el) {
+  const was = el.classList.contains('open');
+  document.querySelectorAll('.rcard').forEach(c => c.classList.remove('open'));
+  if (!was) el.classList.add('open');
+}
+function askR(title) {
+  const t = title.replace(/&#39;/g,"'").replace(/&amp;/g,'&');
+  goTo('chat'); setTimeout(() => sendQ(`Give me step-by-step help cooking ${t} in my CRISPi PRO tonight.`), 200);
+}
+
+// ─── CARE ────────────────────────────────────────────
+function toggleT(el) {
+  const was = el.classList.contains('open');
+  document.querySelectorAll('.tcard').forEach(c => c.classList.remove('open'));
+  if (!was) el.classList.add('open');
+}
+function askFromCare(q) { goTo('chat'); setTimeout(() => sendQ(q), 200); }
+
+// ─── CHAT ────────────────────────────────────────────
+document.getElementById('chat-input').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+function sendQ(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg('user', text);
+
+  const loadId = 'ld' + Date.now();
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'msg ai'; el.id = loadId;
+  el.innerHTML = `<div class="msg-avatar ai">N</div><div class="msg-bubble"><div class="typing-bubble"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div></div>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  let reply = '';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: `You are the AI companion built into the Ninja CRISPi PRO app (model AS100). You have complete knowledge of this appliance from its official owner's guide.
+
+PRODUCT KNOWLEDGE:
+- Air fryer only (not for deep frying). Indoor countertop use only. 1800W, 120V.
+- 6 cooking modes: Air Fry (crispiness with little/no oil), Max Crisp (finishing touch, melts/crisps toppings), Recrisp (revives leftovers), Roast (tenderises meats), Bake/Proof (baked goods and dough proving), Dehydrate (meats, fruits, vegetables).
+- Parts: CRISPi PRO Main Unit, adjustable platform, Ninja CleanCrisp glass containers (2.5QT, 4QT, 6QT), crisper plates x2, lids x2, removable modular base.
+- Modular base positions: 2.5QT = High, 4QT = Middle, 6QT = Low.
+- Controls: Power button, Temp button + dial, Time button + dial, Mode button + dial. Press dial to start/pause.
+- "ADD POT" on screen = container not installed. Push container until it clicks. Cooking pauses automatically if container removed.
+- Does NOT need preheating.
+- Glass container safety: sudden temperature changes can crack glass. Never add cold food to hot glass. Let cool before washing. Handles and heat-protectant base are permanent — never remove. Discard if chipped, cracked or deeply scratched. Dishwasher safe. NOT oven/stovetop/broiler safe. Freezer safe, microwave safe.
+- Cleaning: Main unit = wipe only, never immerse. Glass containers = dishwasher or hand wash. Crisper plates = dishwasher safe. Lids = dishwasher top rack. Modular base = hand wash or wipe only.
+- Lids: NOT for sealing on glass container right after cooking. Freezer/microwave/dishwasher safe. BPA free.
+- For best results: single even layer, no overlapping. Shake halfway. Use crisper plate for crispy results. At least 1 tbsp oil for fresh veg/potatoes.
+- E error = malfunction, call 1-877-646-5288.
+- Warranty: 1 year, registeryourninja.com. Customer service: 1-877-646-5288, ninjakitchen.com.
+
+TONE: Warm, confident, practical. Like a helpful friend who also knows this appliance inside out.
+FORMAT: Use <br> for line breaks, <b> for key terms. Keep answers under 130 words unless a step-by-step is genuinely needed. No markdown asterisks or hashes.`,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    if (res.status === 429) {
+      reply = "Too many requests — wait a moment and try again.";
+    } else if (!res.ok) {
+      reply = `Something went wrong (${res.status}) — try again in a moment.`;
+    } else {
+      const data = await res.json();
+      reply = data.content?.[0]?.text || "Hmm, try asking again!";
+    }
+  } catch(e) {
+    reply = "Network error — check your connection and try again.";
+  }
+
+  const loadEl = document.getElementById(loadId);
+  if (loadEl) loadEl.querySelector('.msg-bubble').innerHTML = reply;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // smart follow-up chips
+  const lower = text.toLowerCase();
+  const key = Object.keys(FOLLOW_UPS).find(k => lower.includes(k));
+  if (key) {
+    document.getElementById('chip-row').innerHTML = FOLLOW_UPS[key]
+      .map(c => `<button class="chip" onclick="sendQ('${c.replace(/'/g,"\\'")}')"> ${c}</button>`).join('');
+  }
+}
+
+function addMsg(role, text) {
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = `msg ${role} fade-in`;
+  el.innerHTML = role === 'user'
+    ? `<div class="msg-avatar user">You</div><div class="msg-bubble">${text}</div>`
+    : `<div class="msg-avatar ai">N</div><div class="msg-bubble">${text}</div>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ─── CLOCK ───────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  const el = document.getElementById('hero-time');
+  if (el) el.textContent = `${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}`;
+}
+tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>
