@@ -84,7 +84,7 @@ const server = http.createServer((req, res) => {
 
       // Only allow the fields we need — strip anything else
       const payload = JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: parsed.system || '',
         messages: parsed.messages || []
